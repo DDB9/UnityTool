@@ -1,12 +1,18 @@
-﻿using System.Collections;
+﻿using System.IO;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 
 public class LampEditor : EditorWindow {
 
-    string[] lightTypes = new string[] { "Flickering Light", "Loose Light", "Normal Light" };
-    int lightIndex = 0; 
+    string[] lightTypes = new string[] { "Flickering Light", "Swinging Light", "Normal Light" };
+    int lightIndex = 0;
+
+    float swingForce;
 
     [MenuItem("Window/Lamp Editor")]
     static void ShowWindow() {
@@ -22,6 +28,13 @@ public class LampEditor : EditorWindow {
         GUILayout.Label("Lamp type:", EditorStyles.miniBoldLabel);
         lightIndex = EditorGUILayout.Popup(lightIndex, lightTypes);
 
+        GUILayout.Space(5f);
+
+        if (lightIndex == 1) {
+            GUILayout.Label("Lamp Options:", EditorStyles.miniBoldLabel);
+            swingForce = EditorGUILayout.FloatField("Swing Force", 0f);
+        }
+
         GUILayout.Space(10f);
 
         if (GUILayout.Button("Create Lamp"))
@@ -30,14 +43,15 @@ public class LampEditor : EditorWindow {
             switch (lightIndex)
             {
                 case 0: // Creates the Flickering Light (Instantiate Prefab)
-                    GameObject flickeringLight = Instantiate(Resources.Load("Assets/Prefabs/fLight.prefab") 
-                                                as GameObject, Vector3.zero, Quaternion.identity);
+                    GameObject flickeringLight = Instantiate(Resources.Load("fLight") as GameObject,
+                                                                Vector3.zero, 
+                                                                Quaternion.Euler(90, 0, 0));
 
                     // if (GameObject.Find("Lights") != null) lt1.transform.parent = GameObject.Find("Lights").transform;
                     break;
 
                 case 1:// Creates the Loose Light (Instantiate Prefab)
-                    GameObject looseLight = new GameObject("New Loose Light");
+                    GameObject looseLight = new GameObject("New Swinging Light");
                     Light lt2 = looseLight.AddComponent<Light>();
                     lt2.type = LightType.Spot;
                     lt2.range = 17f;
