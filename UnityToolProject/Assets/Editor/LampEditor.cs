@@ -10,9 +10,14 @@ using UnityEditor;
 public class LampEditor : EditorWindow {
 
     string[] lightTypes = new string[] { "Flickering Light", "Swinging Light", "Normal Light" };
-    int lightIndex = 0;
+    int lightIndex;
 
     float swingForce;
+    float intensity;
+
+    bool lampVisible;
+
+    GameObject lampModel;
 
     [MenuItem("Window/Lamp Editor")]
     static void ShowWindow() {
@@ -28,45 +33,68 @@ public class LampEditor : EditorWindow {
         GUILayout.Label("Lamp type:", EditorStyles.miniBoldLabel);
         lightIndex = EditorGUILayout.Popup(lightIndex, lightTypes);
 
+        lampVisible = GUILayout.Toggle(lampVisible, "Visible?");
+        if (lampVisible) {
+            lampModel = (GameObject)EditorGUILayout.ObjectField(lampModel, typeof(GameObject), false);
+        }
+
         GUILayout.Space(5f);
 
-        if (lightIndex == 1) {
-            GUILayout.Label("Lamp Options:", EditorStyles.miniBoldLabel);
-            swingForce = EditorGUILayout.FloatField("Swing Force", 0f);
+        switch (lightIndex) {
+            case 0:
+                GUILayout.Label("Lamp Options:", EditorStyles.miniBoldLabel);
+                intensity = EditorGUILayout.FloatField("Intensity", intensity);
+
+                break;
+
+            case 1:
+                GUILayout.Label("Lamp Options:", EditorStyles.miniBoldLabel);
+                swingForce = EditorGUILayout.FloatField("Swing Force", swingForce);
+                intensity = EditorGUILayout.FloatField("Intensity", intensity);
+
+                break;
         }
 
         GUILayout.Space(10f);
 
-        if (GUILayout.Button("Create Lamp"))
-        {
+        if (GUILayout.Button("Create Lamp")) {
 
-            switch (lightIndex)
-            {
+            switch (lightIndex) {
                 case 0: // Creates the Flickering Light (Instantiate Prefab)
                     GameObject flickeringLight = Instantiate(Resources.Load("fLight") as GameObject,
-                                                                Vector3.zero, 
-                                                                Quaternion.Euler(90, 0, 0));
+                                                             Vector3.zero, 
+                                                             Quaternion.Euler(90, 0, 0));
+                    if (lampVisible) {
+                        GameObject lamp = Instantiate(lampModel as GameObject, Vector3.zero, Quaternion.identity);
+                        lamp.transform.parent = flickeringLight.transform;
+                    }
 
-                    // if (GameObject.Find("Lights") != null) lt1.transform.parent = GameObject.Find("Lights").transform;
+                    flickeringLight.name = "New Flickering Light";
+                    flickeringLight.GetComponent<Light>().intensity = intensity;
                     break;
 
-                case 1:// Creates the Loose Light (Instantiate Prefab)
-                    GameObject looseLight = new GameObject("New Swinging Light");
-                    Light lt2 = looseLight.AddComponent<Light>();
-                    lt2.type = LightType.Spot;
-                    lt2.range = 17f;
-                    lt2.spotAngle = 63f;
-                    lt2.intensity = 15f;
+                case 1:// Creates the Swinging Light (Instantiate Prefab)
+                    GameObject swingingLight = Instantiate(Resources.Load("sLight") as GameObject,
+                                                           Vector3.zero,
+                                                           Quaternion.identity);
 
-                    if (GameObject.Find("Lights") != null) lt2.transform.parent = GameObject.Find("Lights").transform;
+                    swingingLight.name = "New Swinging Light";
+                    if (lampVisible) {
+                        GameObject lamp = Instantiate(lampModel as GameObject, Vector3.zero, Quaternion.identity);
+                        lamp.transform.parent = swingingLight.transform.GetChild(0).transform.GetChild(0).transform;
+                        lamp.transform.position = lamp.transform.parent.transform.position;
+                    }
+                    
+                    swingingLight.transform.GetChild(0).transform.GetChild(0).GetComponent<Light>().intensity = intensity;
+                    swingingLight.transform.GetChild(0).transform.GetChild(0).GetComponent<LampManager>().swingForce = swingForce;
                     break;
 
                 case 2: // Creates the Normal Light (Instantiate Prefab)
-                    GameObject normieLamp = new GameObject("New Normal Light");
-                    Light lt3 = normieLamp.AddComponent<Light>();
-                    lt3.type = LightType.Spot;
+                    GameObject normieLamp = new GameObject("New Normal Spotlight");
+                    Light lt = normieLamp.AddComponent<Light>();
+                    lt.type = LightType.Spot;
 
-                    if (GameObject.Find("Lights") != null) lt3.transform.parent = GameObject.Find("Lights").transform;
+                    if (GameObject.Find("Lights") != null) lt.transform.parent = GameObject.Find("Lights").transform;
                     break;
             }
         }

@@ -19,7 +19,7 @@ public class LampManager : MonoBehaviour {
     bool memberInvoked;
 
     [HideInInspector]
-    public float swingForce;    // VERWERK DEZE VARIABLE IN HET EDITOR SCRIPT.
+    public float swingForce;
 
     #region Singleton
     private void Awake() {
@@ -58,12 +58,10 @@ public class LampManager : MonoBehaviour {
     IEnumerator SwingingLight() {
         memberInvoked = true;
 
+        transform.parent.GetComponent<Rigidbody>().AddForce(0, 0, swingForce);
+        yield return new WaitForSeconds(2);
+        transform.parent.GetComponent<Rigidbody>().AddForce(0, 0, -swingForce);
         yield return new WaitForSeconds(1);
-        transform.parent.GetComponent<Rigidbody>().AddForce(new Vector3(0, 0, 5));
-        yield return new WaitForSeconds(1);
-        transform.parent.GetComponent<Rigidbody>().AddForce(Vector3.zero);
-        yield return new WaitForSeconds(1);
-
 
         memberInvoked = false;
     }
