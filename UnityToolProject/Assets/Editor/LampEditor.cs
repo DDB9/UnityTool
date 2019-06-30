@@ -9,11 +9,12 @@ using UnityEditor;
 
 public class LampEditor : EditorWindow {
 
-    string[] lightTypes = new string[] { "Flickering Light", "Swinging Light", "Normal Light" };
+    string[] lightTypes = new string[] { "Flickering Light", "Swinging Light", "Standard Spotlight" };
     int lightIndex;
 
     float swingForce;
-    float intensity;
+    float lightIntensity;
+    Color lightColor = Color.white;
 
     bool lampVisible;
 
@@ -43,15 +44,30 @@ public class LampEditor : EditorWindow {
         switch (lightIndex) {
             case 0:
                 GUILayout.Label("Lamp Options:", EditorStyles.miniBoldLabel);
-                intensity = EditorGUILayout.FloatField("Intensity", intensity);
+                lightIntensity = EditorGUILayout.FloatField("Intensity", lightIntensity);
 
+                GUILayout.Space(3f);
+
+                lightColor = EditorGUILayout.ColorField("Light Color", lightColor);
                 break;
 
             case 1:
                 GUILayout.Label("Lamp Options:", EditorStyles.miniBoldLabel);
                 swingForce = EditorGUILayout.FloatField("Swing Force", swingForce);
-                intensity = EditorGUILayout.FloatField("Intensity", intensity);
+                lightIntensity = EditorGUILayout.FloatField("Intensity", lightIntensity);
 
+                GUILayout.Space(3f);
+
+                EditorGUILayout.ColorField("Light Color", Color.white);
+                break;
+
+            case 2:
+                GUILayout.Label("Lamp Options:", EditorStyles.miniBoldLabel);
+                lightIntensity = EditorGUILayout.FloatField("Intensity", lightIntensity);
+
+                GUILayout.Space(3f);
+
+                EditorGUILayout.ColorField("Light Color", lightColor);
                 break;
         }
 
@@ -70,7 +86,8 @@ public class LampEditor : EditorWindow {
                     }
 
                     flickeringLight.name = "New Flickering Light";
-                    flickeringLight.GetComponent<Light>().intensity = intensity;
+                    flickeringLight.GetComponent<Light>().intensity = lightIntensity;
+                    flickeringLight.GetComponent<Light>().color = lightColor;
                     break;
 
                 case 1:// Creates the Swinging Light (Instantiate Prefab)
@@ -85,16 +102,19 @@ public class LampEditor : EditorWindow {
                         lamp.transform.position = lamp.transform.parent.transform.position;
                     }
                     
-                    swingingLight.transform.GetChild(0).transform.GetChild(0).GetComponent<Light>().intensity = intensity;
+                    swingingLight.transform.GetChild(0).transform.GetChild(0).GetComponent<Light>().intensity = lightIntensity;
                     swingingLight.transform.GetChild(0).transform.GetChild(0).GetComponent<LampManager>().swingForce = swingForce;
+                    swingingLight.GetComponent<Light>().color = lightColor;
                     break;
 
-                case 2: // Creates the Normal Light (Instantiate Prefab)
-                    GameObject normieLamp = new GameObject("New Normal Spotlight");
-                    Light lt = normieLamp.AddComponent<Light>();
+                case 2: // Creates a standard spotlight (Instantiate Prefab)
+                    GameObject standardSpotlight = new GameObject("New Standard Spotlight");
+                    Light lt = standardSpotlight.AddComponent<Light>();
                     lt.type = LightType.Spot;
-
+                    lt.color = lightColor;
+                                       
                     if (GameObject.Find("Lights") != null) lt.transform.parent = GameObject.Find("Lights").transform;
+
                     break;
             }
         }

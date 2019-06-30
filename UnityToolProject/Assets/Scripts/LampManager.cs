@@ -62,8 +62,6 @@ public class LampManager : MonoBehaviour {
         yield return new WaitForSeconds(2);
         transform.parent.GetComponent<Rigidbody>().AddForce(0, 0, -swingForce);
         yield return new WaitForSeconds(1);
-
-        memberInvoked = false;
     }
 }
 
