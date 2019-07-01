@@ -507,7 +507,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   selectedLampType: 2
   swingForce: 0
-  rotSpeed: 0
 --- !u!4 &1676921683
 Transform:
   m_ObjectHideFlags: 0
