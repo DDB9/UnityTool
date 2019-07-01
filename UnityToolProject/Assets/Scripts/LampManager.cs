@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
-public enum LampType { FLICKERING, LOOSE };
+public enum LampType { FLICKERING, LOOSE, ROTATING };
 
 public class LampManager : MonoBehaviour {
     #region Singleton
@@ -20,6 +20,9 @@ public class LampManager : MonoBehaviour {
 
     [HideInInspector]
     public float swingForce;
+
+    [System.NonSerialized]
+    public float rotSpeed;
 
     #region Singleton
     private void Awake() {
@@ -40,6 +43,10 @@ public class LampManager : MonoBehaviour {
 
         if (!memberInvoked && selectedLampType == LampType.LOOSE) {
             StartCoroutine(SwingingLight());
+        }
+
+        if (selectedLampType == LampType.ROTATING) {
+            transform.Rotate(Vector3.right * Time.deltaTime * rotSpeed);
         }
 
     }

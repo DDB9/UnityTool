@@ -1,24 +1,34 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Linq;
 using System.Collections;
+using System.Linq.Expressions;
 using System.Collections.Generic;
+using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
-
-#if UNITY_EDITOR
 using UnityEditor;
-#endif
+
 
 public class LampEditor : EditorWindow {
 
-    string[] lightTypes = new string[] { "Flickering Light", "Swinging Light", "Standard Spotlight" };
+    string[] currentInterface = new string[] { "Tweak Lighting in Scene", "Create a Lightsource" };
+    string[] lightTypes = new string[] { "Flickering Light", "Swinging Light", "Rotating Light", "Standard Spotlight" };
+    List<string> savedLights = new List<string>();
+    int interfaceIndex;
     int lightIndex;
+    int currentPrefabIndex;
 
     float swingForce;
+    float rotationSpeed = 100;
     float lightIntensity;
     Color lightColor = Color.white;
 
     bool lampVisible;
 
     GameObject lampModel;
+
+    public string lightName;
+    public GameObject customLight;
 
     [MenuItem("Window/Lamp Editor")]
     static void ShowWindow() {
@@ -27,96 +37,182 @@ public class LampEditor : EditorWindow {
     }
 
     private void OnGUI() {
-        GUILayout.Label("Create a lamp", EditorStyles.boldLabel);
-
-        GUILayout.Space(10f);
-
-        GUILayout.Label("Lamp type:", EditorStyles.miniBoldLabel);
-        lightIndex = EditorGUILayout.Popup(lightIndex, lightTypes);
-
-        lampVisible = GUILayout.Toggle(lampVisible, "Visible?");
-        if (lampVisible) {
-            lampModel = (GameObject)EditorGUILayout.ObjectField(lampModel, typeof(GameObject), false);
-        }
-
-        GUILayout.Space(5f);
-
-        switch (lightIndex) {
+        interfaceIndex = EditorGUILayout.Popup("Select Interface:", interfaceIndex, currentInterface);
+        switch (interfaceIndex) {
             case 0:
-                GUILayout.Label("Lamp Options:", EditorStyles.miniBoldLabel);
-                lightIntensity = EditorGUILayout.FloatField("Intensity", lightIntensity);
+                GUILayout.Label("CUSTOM LIGHTING SETTINGS", EditorStyles.boldLabel);
 
+                GUILayout.Space(5f);
+
+                if (GUILayout.Button("Load your custom lights")) {
+                    LoadLights();
+                }
+                GUILayout.Space(5f);
+
+                GUILayout.Label("Save a custom Prefab");
+                customLight = (GameObject)EditorGUILayout.ObjectField(customLight, typeof(GameObject), true);
                 GUILayout.Space(3f);
+                lightName = EditorGUILayout.TextField("Name your prefab:", lightName);
 
-                lightColor = EditorGUILayout.ColorField("Light Color", lightColor);
+                if (GUILayout.Button("Save")) {
+                    SaveLight();
+                }
+
+                GUILayout.Space(10f);
+                GUILayout.Label("Saved Prefabs:", EditorStyles.boldLabel);
+                EditorGUILayout.Popup("Choose a prefab:", currentPrefabIndex, savedLights.ToArray());
+
                 break;
 
             case 1:
-                GUILayout.Label("Lamp Options:", EditorStyles.miniBoldLabel);
-                swingForce = EditorGUILayout.FloatField("Swing Force", swingForce);
-                lightIntensity = EditorGUILayout.FloatField("Intensity", lightIntensity);
+                GUILayout.Label("CREATE A LIGHTSOURCE", EditorStyles.boldLabel);
 
-                GUILayout.Space(3f);
+                GUILayout.Space(10f);
 
-                EditorGUILayout.ColorField("Light Color", Color.white);
-                break;
+                lightIndex = EditorGUILayout.Popup("Lamp Type:", lightIndex, lightTypes);
 
-            case 2:
-                GUILayout.Label("Lamp Options:", EditorStyles.miniBoldLabel);
-                lightIntensity = EditorGUILayout.FloatField("Intensity", lightIntensity);
+                lampVisible = GUILayout.Toggle(lampVisible, "Visible?");
+                if (lampVisible) {
+                    lampModel = (GameObject)EditorGUILayout.ObjectField(lampModel, typeof(GameObject), false);
+                }
 
-                GUILayout.Space(3f);
+                GUILayout.Space(5f);
 
-                EditorGUILayout.ColorField("Light Color", lightColor);
+                switch (lightIndex) {
+                    case 0:
+                        GUILayout.Label("A light that flickers with random intervals between the 0.1\nand 1.5 seconds.", EditorStyles.boldLabel);
+                        GUILayout.Space(1f);
+                        GUILayout.Label("Lamp Options:", EditorStyles.miniBoldLabel);
+                        lightIntensity = EditorGUILayout.FloatField("Intensity", lightIntensity);
+
+                        GUILayout.Space(3f);
+
+                        lightColor = EditorGUILayout.ColorField("Light Color", lightColor);
+                        break;
+
+                    case 1:
+                        GUILayout.Label("Lamp Options:", EditorStyles.miniBoldLabel);
+                        swingForce = EditorGUILayout.FloatField("Swing Force", swingForce);
+                        lightIntensity = EditorGUILayout.FloatField("Intensity", lightIntensity);
+
+                        GUILayout.Space(3f);
+
+                        EditorGUILayout.ColorField("Light Color", Color.white);
+                        break;
+
+                    case 2:
+                        GUILayout.Label("Lamp Options:", EditorStyles.miniBoldLabel);
+                        lightIntensity = EditorGUILayout.FloatField("Intensity", lightIntensity);
+                        rotationSpeed = EditorGUILayout.FloatField("Rotation Speed", rotationSpeed);
+
+                        GUILayout.Space(3f);
+
+                        lightColor = EditorGUILayout.ColorField("Light Color", lightColor);
+                        break;
+
+                    case 3:
+                        GUILayout.Label("Lamp Options:", EditorStyles.miniBoldLabel);
+                        lightIntensity = EditorGUILayout.FloatField("Intensity", lightIntensity);
+
+                        GUILayout.Space(3f);
+
+                        EditorGUILayout.ColorField("Light Color", lightColor);
+                        break;
+                }
+
+                GUILayout.Space(10f);
+
+                if (GUILayout.Button("Create Lamp")) {
+
+                    switch (lightIndex) {
+                        case 0: // Creates the Flickering Light (Instantiate Prefab)
+                            GameObject flickeringLight = Instantiate(Resources.Load("fLight") as GameObject,
+                                                                     Vector3.zero,
+                                                                     Quaternion.Euler(90, 0, 0));
+                            if (lampVisible) {
+                                GameObject lamp = Instantiate(lampModel as GameObject, Vector3.zero, Quaternion.identity);
+                                lamp.transform.parent = flickeringLight.transform;
+                            }
+
+                            flickeringLight.name = "New Flickering Light";
+                            flickeringLight.GetComponent<Light>().intensity = lightIntensity;
+                            flickeringLight.GetComponent<Light>().color = lightColor;
+                            break;
+
+                        case 1:// Creates the Swinging Light (Instantiate Prefab)
+                            GameObject swingingLight = Instantiate(Resources.Load("sLight") as GameObject,
+                                                                   Vector3.zero,
+                                                                   Quaternion.identity);
+
+                            swingingLight.name = "New Swinging Light";
+                            if (lampVisible) {
+                                GameObject lamp = Instantiate(lampModel as GameObject, Vector3.zero, Quaternion.identity);
+                                lamp.transform.parent = swingingLight.transform.GetChild(0).transform.GetChild(0).transform;
+                                lamp.transform.position = lamp.transform.parent.transform.position;
+                            }
+
+                            swingingLight.transform.GetChild(0).transform.GetChild(0).GetComponent<Light>().intensity = lightIntensity;
+                            swingingLight.transform.GetChild(0).transform.GetChild(0).GetComponent<LampManager>().swingForce = swingForce;
+                            swingingLight.GetComponent<Light>().color = lightColor;
+                            break;
+
+                        case 2:
+                            GameObject rotatingLight = Instantiate(Resources.Load("rLight") as GameObject,
+                                                                   Vector3.zero,
+                                                                   Quaternion.identity);
+
+                            rotatingLight.name = "New Rotating Light";
+
+                            break;
+
+                        case 3: // Creates a standard spotlight (Instantiate Prefab)
+                            GameObject standardSpotlight = new GameObject("New Standard Spotlight");
+                            Light lt = standardSpotlight.AddComponent<Light>();
+                            lt.type = LightType.Spot;
+                            lt.color = lightColor;
+
+                            if (GameObject.Find("Lights") != null)
+                                lt.transform.parent = GameObject.Find("Lights").transform;
+
+                            break;
+                    }
+                    break;
+                }
                 break;
         }
+    }
 
-        GUILayout.Space(10f);
+    public void SaveLight() {
+        if (savedLights.Contains(lightName)) {
+            Debug.LogError("You already saved a prefab with the same name! Please choose a different name.");
+            return;
+        }
+        savedLights.Add(lightName);
 
-        if (GUILayout.Button("Create Lamp")) {
+        BinaryFormatter formatter = new BinaryFormatter();
+        SavedData data = new SavedData();
 
-            switch (lightIndex) {
-                case 0: // Creates the Flickering Light (Instantiate Prefab)
-                    GameObject flickeringLight = Instantiate(Resources.Load("fLight") as GameObject,
-                                                             Vector3.zero, 
-                                                             Quaternion.Euler(90, 0, 0));
-                    if (lampVisible) {
-                        GameObject lamp = Instantiate(lampModel as GameObject, Vector3.zero, Quaternion.identity);
-                        lamp.transform.parent = flickeringLight.transform;
-                    }
+        FileStream file = File.Create(Application.persistentDataPath + "/lightdata.data");
 
-                    flickeringLight.name = "New Flickering Light";
-                    flickeringLight.GetComponent<Light>().intensity = lightIntensity;
-                    flickeringLight.GetComponent<Light>().color = lightColor;
-                    break;
+        formatter.Serialize(file, data);
+        file.Close();
+    }
 
-                case 1:// Creates the Swinging Light (Instantiate Prefab)
-                    GameObject swingingLight = Instantiate(Resources.Load("sLight") as GameObject,
-                                                           Vector3.zero,
-                                                           Quaternion.identity);
 
-                    swingingLight.name = "New Swinging Light";
-                    if (lampVisible) {
-                        GameObject lamp = Instantiate(lampModel as GameObject, Vector3.zero, Quaternion.identity);
-                        lamp.transform.parent = swingingLight.transform.GetChild(0).transform.GetChild(0).transform;
-                        lamp.transform.position = lamp.transform.parent.transform.position;
-                    }
-                    
-                    swingingLight.transform.GetChild(0).transform.GetChild(0).GetComponent<Light>().intensity = lightIntensity;
-                    swingingLight.transform.GetChild(0).transform.GetChild(0).GetComponent<LampManager>().swingForce = swingForce;
-                    swingingLight.GetComponent<Light>().color = lightColor;
-                    break;
+    public void LoadLights() {
+        if (File.Exists(Application.persistentDataPath + "/lightdata")) {
+            BinaryFormatter formatter = new BinaryFormatter();
+            FileStream file = File.Open(Application.persistentDataPath + "/lightdata.data", FileMode.Open);
 
-                case 2: // Creates a standard spotlight (Instantiate Prefab)
-                    GameObject standardSpotlight = new GameObject("New Standard Spotlight");
-                    Light lt = standardSpotlight.AddComponent<Light>();
-                    lt.type = LightType.Spot;
-                    lt.color = lightColor;
-                                       
-                    if (GameObject.Find("Lights") != null) lt.transform.parent = GameObject.Find("Lights").transform;
-
-                    break;
-            }
+            file.Position = 0;
+            SavedData data = (SavedData)formatter.Deserialize(file);
+            file.Close();
         }
     }
 }
+
+[Serializable]
+public class SavedData {
+}
+
+
