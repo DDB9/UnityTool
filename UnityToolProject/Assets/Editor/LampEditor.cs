@@ -20,7 +20,7 @@ public class LampEditor : EditorWindow {
 
     float swingForce;
     float rotationSpeed = 100;
-    float lightIntensity;
+    float lightIntensity = 1;
     Color lightColor = Color.white;
 
     bool lampVisible;
@@ -60,7 +60,7 @@ public class LampEditor : EditorWindow {
 
                 GUILayout.Space(10f);
                 GUILayout.Label("Saved Prefabs:", EditorStyles.boldLabel);
-                EditorGUILayout.Popup("Choose a prefab:", currentPrefabIndex, savedLights.ToArray());
+                currentPrefabIndex = EditorGUILayout.Popup("Choose a prefab:", currentPrefabIndex, savedLights.ToArray());
 
                 break;
 
@@ -193,6 +193,7 @@ public class LampEditor : EditorWindow {
         SavedData data = new SavedData();
 
         FileStream file = File.Create(Application.persistentDataPath + "/lightdata.data");
+        data.prefabName = lightName; 
 
         formatter.Serialize(file, data);
         file.Close();
@@ -207,12 +208,16 @@ public class LampEditor : EditorWindow {
             file.Position = 0;
             SavedData data = (SavedData)formatter.Deserialize(file);
             file.Close();
+
+            savedLights.Add(data.prefabName);
         }
     }
 }
 
 [Serializable]
 public class SavedData {
+    public string prefabName;
+
 }
 
 
