@@ -45,6 +45,7 @@ public class RPGEditor : Editor {
         hairStyleIndex = EditorGUILayout.Popup("Select HairStyle:", hairStyleIndex, hairStyle);
 
 
+        
         #region Character Update
         if (GUILayout.Button("Update Hair style")) {
             switch (hairStyleIndex) {
