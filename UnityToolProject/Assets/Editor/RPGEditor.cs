@@ -18,6 +18,8 @@ public class RPGEditor : Editor {
     string[] clothes = new string[] { "Suit", "Tanktop", "Casual" };
     int clothingIndex = 0;
 
+    string characterBio = "";
+
     Color armColor;
 
     public override void OnInspectorGUI() {
@@ -126,17 +128,23 @@ public class RPGEditor : Editor {
             SaveData(1);
         }
 
+        GUILayout.Space(10f);
+        GUILayout.Label("CHARACTER BIO");
+        EditorGUILayout.TextField("Enter a biography for your character.");
+
+        if (GUILayout.Button("Save Character Bio")) {
+            SaveData(2);
+        }
+
         GUILayout.Space(15f);
         GUI.backgroundColor = Color.green;
         if (GUILayout.Button("SAVE ALL CHANGES")) {
-            SaveData(0);
-            SaveData(1);
+            SaveData(3);
         }
         GUILayout.Space(5f);
         GUI.backgroundColor = Color.cyan;
         if (GUILayout.Button("Load Character")) {
-            LoadData(0);
-            LoadData(1);
+            LoadData(3);
         }
         GUILayout.Label("If you have a character saved from a different project, please navigate to \n" +
             "C:/Users/[Computer Name]/AppData/LocalLow/[Company Name]/[Project Name]/rpgcharacter.data \n" +
@@ -147,7 +155,16 @@ public class RPGEditor : Editor {
         GUI.backgroundColor = Color.red;
         if (GUILayout.Button("Reset Character")) {
             hair.color = Color.white;
+            body.sprite = null;
             hair.sprite = null;
+            body.color = armColor;
+            rightLeg.color = armColor;
+            leftLeg.color = armColor;
+            rightArm.color = armColor;
+            leftArm.color = armColor;
+            rightShoe.color = armColor;
+            leftShoe.color = armColor;
+
             hairColorIndex = 0;
         }
         GUILayout.Label("Click here if the tool is acting up.");
@@ -166,6 +183,15 @@ public class RPGEditor : Editor {
                 break;
             case 1:
                 data.clothingIndex = clothingIndex;
+                break;
+            case 2:
+                data.characterBio = characterBio;
+                break;
+            case 3:
+                data.hairColorIndex = hairColorIndex;
+                data.hairStyleIndex = hairStyleIndex;
+                data.clothingIndex = clothingIndex;
+                data.characterBio = characterBio;
                 break;
         }
 
@@ -192,7 +218,16 @@ public class RPGEditor : Editor {
                 case 1:
                     clothingIndex = data.clothingIndex;
                     break;
-            }
+                case 2:
+                    characterBio = data.characterBio;
+                    break;
+                case 3:
+                    hairColorIndex = data.hairColorIndex;
+                    hairStyleIndex = data.hairStyleIndex;
+                    clothingIndex = data.clothingIndex;
+                    characterBio = data.characterBio;
+                    break;
+            } 
 
             Debug.Log("Character loaded from " + Application.persistentDataPath + "/rpgcharacter.data");
         }
@@ -207,5 +242,6 @@ class CharacterData {
     public int hairColorIndex;
     public int hairStyleIndex;
     public int clothingIndex;
+    public string characterBio;
 }
 #endregion
