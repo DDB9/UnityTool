@@ -8,22 +8,26 @@ using UnityEngine.UI;
 using UnityEditor;
 
 [CustomEditor(typeof(CharacterCreation))]
-public class RPGEditor : Editor {
+public class RPGEditor : Editor
+{
 
-    string[] hairColor = new string[] { "Red", "Blue", "Green", "Blonde", "Black" };
-    string[] hairStyle = new string[] { "Messy", "Punk", "Slick" };
-    int hairStyleIndex = 0;
-    int hairColorIndex = 0;
+    string[] hairColor = new string[] { "Red", "Blue", "Green", "Blonde", "Black" };    // Possible hair colors.
+    string[] hairStyle = new string[] { "Messy", "Punk", "Slick" };                     // Possible hairstyles.
+    int hairStyleIndex = 0;     // Current hairstyle.
+    int hairColorIndex = 0;     // Current hair color.
 
-    string[] clothes = new string[] { "Suit", "Tanktop", "Casual" };
-    int clothingIndex = 0;
+    string[] clothes = new string[] { "Suit", "Tanktop", "Casual" };    // Possible clothing styles.
+    int clothingIndex = 0;      // Current clothing style.
 
-    string characterBio = "";
+    string characterBio = "";   // Custom user-writeen character biography.
 
-    Color armColor;
+    Color armColor;             // Color of (both) arms.
 
-    public override void OnInspectorGUI() {
+    public override void OnInspectorGUI()
+    {
         Repaint();
+
+        // Finds all the gameobjects the user can customize. Used find instead of public variables to ease the usage of the tool.
         #region GameObject Collection
         Image hair = GameObject.Find("rpgtool_HAIR").GetComponent<Image>();
         Image body = GameObject.Find("rpgtool_BODY").GetComponent<Image>();
@@ -36,19 +40,22 @@ public class RPGEditor : Editor {
 
         armColor = GameObject.Find("rpgtool_LEFTHAND").GetComponent<Image>().color;
         #endregion
-        
+
         GUILayout.Label("[+] CREATE YOUR CHARACTER [+]", EditorStyles.boldLabel);
 
         GUILayout.Space(15f);
+
+        // Change hairstyle -and color
         GUILayout.Label("HAIR", EditorStyles.boldLabel);
         hairColorIndex = EditorGUILayout.Popup("Select Haircolor:", hairColorIndex, hairColor);
         hairStyleIndex = EditorGUILayout.Popup("Select HairStyle:", hairStyleIndex, hairStyle);
 
-
-        
+        // Button to update your character.
         #region Character Update
-        if (GUILayout.Button("Update Hair style")) {
-            switch (hairStyleIndex) {
+        if (GUILayout.Button("Update Hair style"))
+        {
+            switch (hairStyleIndex)
+            {
                 case 0:
                     hair.sprite = Resources.Load<Sprite>("Hairstyles/MessyHair");
                     break;
@@ -60,7 +67,8 @@ public class RPGEditor : Editor {
                     break;
             }
 
-            switch (hairColorIndex) {
+            switch (hairColorIndex)
+            {
                 case 0:
                     Color tempr = Color.red;
                     hair.color = tempr;
@@ -87,12 +95,16 @@ public class RPGEditor : Editor {
 
         #endregion
 
+
+        // Change clothes.
         GUILayout.Space(10f);
         GUILayout.Label("CLOTHES", EditorStyles.boldLabel);
         clothingIndex = EditorGUILayout.Popup("Select Clothes:", clothingIndex, clothes);
 
-        if (GUILayout.Button("Update Clothing")) {
-            switch (clothingIndex) {
+        if (GUILayout.Button("Update Clothing"))
+        {
+            switch (clothingIndex)
+            {
                 case 0: // suit
                     body.sprite = null;
                     body.color = Color.black;
@@ -130,21 +142,31 @@ public class RPGEditor : Editor {
         }
 
         GUILayout.Space(10f);
+
+        // The user can write their character's biography if they like. Gimmick feature.
         GUILayout.Label("CHARACTER BIO");
         EditorGUILayout.TextField("Enter a biography for your character.");
 
-        if (GUILayout.Button("Save Character Bio")) {
+        if (GUILayout.Button("Save Character Bio"))
+        {   // Saves the bio to the character.
             SaveData(2);
         }
 
         GUILayout.Space(15f);
+
+        // Green button to save all character changes at once.
         GUI.backgroundColor = Color.green;
-        if (GUILayout.Button("SAVE ALL CHANGES")) {
+        if (GUILayout.Button("SAVE ALL CHANGES"))
+        {
             SaveData(3);
         }
+
         GUILayout.Space(5f);
+
+        // Blue button to load an already saved character into the tool.
         GUI.backgroundColor = Color.cyan;
-        if (GUILayout.Button("Load Character")) {
+        if (GUILayout.Button("Load Character"))
+        {
             LoadData(3);
         }
         GUILayout.Label("If you have a character saved from a different project, please navigate to \n" +
@@ -153,8 +175,11 @@ public class RPGEditor : Editor {
             "For Questions and support please send an email to ddebruijn9@gmail.com.");
 
         GUILayout.Space(15f);
+
+        // Reset's the character to bare minimum. Useful for if the tool acts up.
         GUI.backgroundColor = Color.red;
-        if (GUILayout.Button("Reset Character")) {
+        if (GUILayout.Button("Reset Character"))
+        {
             hair.color = Color.white;
             body.sprite = null;
             hair.sprite = null;
@@ -172,12 +197,16 @@ public class RPGEditor : Editor {
     }
 
     #region binary data safe
-    public void SaveData(int dataType) {
+    // This takes care of saving the characters via a binary formatter.
+    public void SaveData(int dataType)
+    {
         BinaryFormatter formatter = new BinaryFormatter();
         CharacterData data = new CharacterData();
 
-        FileStream file = File.Create(Application.persistentDataPath + "/rpgcharacter.RPGTool");
-        switch (dataType) {
+        FileStream file = File.Create(Application.persistentDataPath + "/rpgcharacter.RPGTool");    // Save location.
+        // Writes all changed data to the file.
+        switch (dataType)
+        {
             case 0:
                 data.hairColorIndex = hairColorIndex;
                 data.hairStyleIndex = hairStyleIndex;
@@ -201,9 +230,13 @@ public class RPGEditor : Editor {
         Debug.Log("Character saved to " + Application.persistentDataPath + "/rpgcharacter.RPGTool");
     }
 
-
-    public void LoadData(int dataType) {
-        if (File.Exists(Application.persistentDataPath + "/rpgcharacter.RPGTool")) {
+    /* This takes care of loading already exsisting characters into the tool.
+     * This basically does almost the exact same as the save function, but in reverse. So instead of writing the local variables to the file,
+     * this function writes the variables from the file onto the local variables. */
+    public void LoadData(int dataType)
+    {
+        if (File.Exists(Application.persistentDataPath + "/rpgcharacter.RPGTool"))
+        {
             BinaryFormatter formatter = new BinaryFormatter();
             FileStream file = File.Open(Application.persistentDataPath + "/rpgcharacter.RPGTool", FileMode.Open);
 
@@ -211,7 +244,8 @@ public class RPGEditor : Editor {
             CharacterData data = (CharacterData)formatter.Deserialize(file);
             file.Close();
 
-            switch (dataType) {
+            switch (dataType)
+            {
                 case 0:
                     hairColorIndex = data.hairColorIndex;
                     hairStyleIndex = data.hairStyleIndex;
@@ -228,18 +262,20 @@ public class RPGEditor : Editor {
                     clothingIndex = data.clothingIndex;
                     characterBio = data.characterBio;
                     break;
-            } 
+            }
 
             Debug.Log("Character loaded from " + Application.persistentDataPath + "/rpgcharacter.data");
         }
-        else {
+        else
+        {
             Debug.LogError("Failed to load due to the abscense of rpgcharacter.data file.");
         }
     }
 }
 
 [Serializable]
-class CharacterData {
+class CharacterData
+{
     public int hairColorIndex;
     public int hairStyleIndex;
     public int clothingIndex;
